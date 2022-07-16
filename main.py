@@ -169,6 +169,7 @@ async def main():
 
     # start the client
     async with client:
+        print(f"{currentTimeSuccessDXB()} GitHub repository clone executed!")
         cogCount = 0
         cogSuccess = 0
         for filename in os.listdir('./cogs'):
