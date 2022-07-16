@@ -386,7 +386,7 @@ class ModerationCog(commands.Cog):
         await cursor.close()
         #-----------------------------------------------------------------
 
-        strikenum = len(data) + 1
+        strikenum = str(len(data) + 1)
         if direc in ctx.author.roles:
             role = ", Director of RATA"
         elif ad in ctx.author.roles:
@@ -438,7 +438,7 @@ class ModerationCog(commands.Cog):
 
             embed_dm=discord.Embed(title="You have been striked by the RATA Administration", color=0xeb6b34)
             embed_dm.add_field(name="Strike Department",value="> "+dept.title(),inline=False)
-            embed_dm.add_field(name="Strike Number",value="> "+strikenum,inline=False)
+            embed_dm.add_field(name="Strike Number",value=f"> **`{strikenum}`**",inline=False)
             embed_dm.add_field(name="Strike Issuer",value=f"> **{ctx.author.display_name}**{role}",inline=False)
             embed_dm.add_field(name="Strike Date",value=f"> <t:{round(time.time())}:F>",inline=False)
             embed_dm.set_thumbnail(url="https://cdn.discordapp.com/attachments/450656229744967681/770326969505153064/image-min22.png")
@@ -452,7 +452,7 @@ class ModerationCog(commands.Cog):
             embed_send = discord.Embed(color=0xeb6b34)
             embed_send.set_author(name=f"{staff.display_name} has recieved a strike.", icon_url=staff.avatar)
             embed_send.add_field(name="Strike Department",value="> "+dept.title(),inline=False)
-            embed_send.add_field(name="Strike Number",value="> "+strikenum,inline=False)
+            embed_send.add_field(name="Strike Number",value=f"> **`{strikenum}`**",inline=False)
             embed_send.add_field(name="Strike Issuer",value=f"> **{ctx.author.display_name}**{role}",inline=False)
             embed_send.add_field(name="Strike Date",value=f"> <t:{round(time.time())}:F>",inline=False)
             embed_send.add_field(name="Strike Reason",value=f"> {reasonMsg.content}"+f"{reasonMsg_attachmentStr}",inline=False)
