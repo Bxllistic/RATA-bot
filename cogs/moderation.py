@@ -479,7 +479,7 @@ class ModerationCog(commands.Cog):
         if isinstance(error, discord.ext.commands.errors.MemberNotFound):
             await ctx.send("<a:RO_alert:773211228373647360> User was not found. Please ensure you are using either complete discord username (abc#1234) or their user ID.")
         elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            await ctx.send("<a:RO_alert:773211228373647360> Missing necessary argument.\n```\nr.strike <user_name> <reason>\n```")
+            await ctx.send("<a:RO_alert:773211228373647360> Missing necessary argument.\n```\nr.strike @<user>\n```")
 
 
     @commands.command(name='strikes',aliases=['showstrikes'])
