@@ -50,7 +50,7 @@ class NitroExamCog(commands.Cog):
             if role.id == Roles.donator:
                 dono_access = True
         
-        if ctx.author.premium_since == None or dono_access == False:
+        if ctx.author.premium_since == None and dono_access == False:
             return await ctx.reply(embed = discord.Embed(description="This command is only for Nitro Boosters and Donators of this server.",colour=0xFF0000))
         else:
             if ctx.author.id not in fail_cooldown_list:
