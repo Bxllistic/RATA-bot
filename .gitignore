@@ -1,0 +1,5 @@
+*.pyc
+moderation.db
+scoreChecked.dat
+.env
+LICENSE
