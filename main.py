@@ -94,10 +94,7 @@ async def on_command_error(ctx, error):
     elif isinstance(error, discord.ext.commands.errors.MissingRole):
         return await ctx.reply(embed=discord.Embed(description=f'<:missingroles:876142198415052831> You are missing the <@&{error.missing_role}> role.', color=discord.Color.red()))
     elif isinstance(error, discord.ext.commands.errors.MissingPermissions):
-        print(f'{currentTimeErrorDXB()} Ignoring exception in command {ctx.command}:', file=sys.stderr)
-        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-        print('-'*20)
-        return
+        return await ctx.reply(embed=discord.Embed(description=f'<:missingroles:876142198415052831> You are missing the '+'`'+'`, `'.join(error.missing_permissions)+'` permission(s)', color=discord.Color.red()))
     elif isinstance(error, discord.ext.commands.errors.NoPrivateMessage):
         await ctx.reply("<:RO_error:773206804758790184> You cannot use this command in DMs, please use it in the appropriate channel in RATA.")
         return
