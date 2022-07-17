@@ -43,12 +43,12 @@ class YesorNoView(discord.ui.View):
             return False 
     
     @discord.ui.button(style=discord.ButtonStyle.gray, emoji='<:yes:614538082774941716>')
-    async def announce(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.value = True
         self.stop()
 
     @discord.ui.button(style=discord.ButtonStyle.gray, emoji='<:no:614538096704487425>')
-    async def abort(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.value = False
         self.stop()
 
@@ -450,14 +450,14 @@ class ModerationCog(commands.Cog):
             embed_dm.set_footer(text=f'Staff ID: {staff.id} - RATA Administration')
 
             embed_send = discord.Embed(color=0xeb6b34)
-            embed_send.set_author(name=f"{staff.display_name} has recieved a strike.", icon_url=staff.avatar)
+            embed_send.set_author(name=f"{staff.display_name} ({staff.id}) has recieved a strike.", icon_url=staff.avatar)
             embed_send.add_field(name="Strike Department",value="> "+dept.title(),inline=False)
             embed_send.add_field(name="Strike Number",value=f"> **`{strikenum}`**",inline=False)
             embed_send.add_field(name="Strike Issuer",value=f"> **{ctx.author.display_name}**{role}",inline=False)
             embed_send.add_field(name="Strike Date",value=f"> <t:{round(time.time())}:F>",inline=False)
             embed_send.add_field(name="Strike Reason",value=f"> {reasonMsg.content}"+f"{reasonMsg_attachmentStr}",inline=False)
             embed_send.set_thumbnail(url="https://cdn.discordapp.com/attachments/450656229744967681/770326969505153064/image-min22.png")
-            embed_send.set_footer(text=f'Staff ID: {staff.id} - RATA Administration')
+            embed_send.set_footer(text=f'Strike ID: {strike_id} | RATA Administration')
             try:
                 await staff.send(embed=embed_dm)
             except:

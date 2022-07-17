@@ -24,6 +24,30 @@ def get_creds():
 
 agcm = gspread_asyncio.AsyncioGspreadClientManager(get_creds)
 
+class YesorNoView(discord.ui.View):
+    def __init__(self, author : discord.Member, *, timeout=60):
+        super().__init__(timeout=timeout)
+        self.author = author
+        self.value = None
+    
+    async def interaction_check(self, interaction: discord.Interaction):
+        if interaction.user.id == self.author.id:
+            return True
+        else:
+            return False 
+    
+    @discord.ui.button(style=discord.ButtonStyle.gray, emoji='<:yes:614538082774941716>')
+    async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = True
+        button.disabled=True
+        self.stop()
+
+    @discord.ui.button(style=discord.ButtonStyle.gray, emoji='<:no:614538096704487425>')
+    async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = False
+        button.disabled=True
+        self.stop()
+
 class NitroExamCog(commands.Cog):
     def __init__(self, client):
         self.client = client
@@ -38,65 +62,66 @@ class NitroExamCog(commands.Cog):
     @commands.cooldown(1,60,commands.BucketType.user)
     async def nitroExam(self,ctx):
         global fail_cooldown_list
-        agc = await agcm.authorize()
-        sheet = await agc.open_by_key("1DwDi-ouq8gUTVPJ2kcIWTJcAuAD_lKWlZmeTFdqubUE")  #open sheet
-        worksheet = await sheet.worksheet("Data")
-    
-        Nsheet = await agc.open_by_key("1Dd9ZKtfwBUiN1jSY-WfIlyAx2RMJmYJX-9lr8YPEQ6A")
-        Nworksheet = await Nsheet.worksheet("Booster Exams")
-
+        
         dono_access = False
         for role in ctx.author.roles:
             if role.id == Roles.donator:
                 dono_access = True
-        
-        if ctx.author.premium_since == None and dono_access == False:
-            return await ctx.reply(embed = discord.Embed(description="This command is only for Nitro Boosters and Donators of this server.",colour=0xFF0000))
-        else:
-            if ctx.author.id not in fail_cooldown_list:
-                if (await worksheet.acell('B4')).value == "NO":
-                    try:
-                        user_id_cell = await Nworksheet.find(str(ctx.author.id))
-                        return await ctx.author.send(embed=discord.Embed(description=":warning: You have already sent a booster exam. Use `r.checkScore` to check your score."))
-                    except:
-                        confirm_msg = await ctx.author.send(embed=discord.Embed(title="⚠️ Confirmation",description="For security reasons, you will be limited to 3 hours of time to complete the quiz. Don't worry however, the quiz should only take about 20-40 minutes.\n> *Only continue if you have enough time to give the exam.*",colour=0xeb6b34).set_footer(text="React accordingly"))
-                        await confirm_msg.add_reaction("<:RO_success:773206804850016276>")
-                        await confirm_msg.add_reaction("<:RO_error:773206804758790184>")
 
-                        def check(reaction,user):
-                            return user == ctx.author and str(reaction.emoji) in ["<:RO_success:773206804850016276>","<:RO_error:773206804758790184>"] 
+        if ctx.author.premium_since == None and dono_access == False:
+            return await ctx.reply(embed = discord.Embed(description="This command is only for Nitro Boosters and Donators of this server.",colour=discord.Color.red()))
+        
+        try:
+            await ctx.message.add_reaction("<:RO_success:773206804850016276>")
+            loadingMsg = await ctx.author.send(embed=discord.Embed(description='<a:loading:973261872398753833> *Working on your request...*'))
+        except:
+            return await ctx.reply('<:RO_error:773206804758790184> I can\'t DM you! Please keep your DMs open to everyone to allow me to continue with the certification exam.')
+
+        agc = await agcm.authorize()
+        sheet = await agc.open_by_key("1DwDi-ouq8gUTVPJ2kcIWTJcAuAD_lKWlZmeTFdqubUE")
+        worksheet = await sheet.worksheet("Data")
+    
+        Nsheet = await agc.open_by_key("1Dd9ZKtfwBUiN1jSY-WfIlyAx2RMJmYJX-9lr8YPEQ6A")
+        Nworksheet = await Nsheet.worksheet("Booster Exams")
+        
+        if ctx.author.id not in fail_cooldown_list:
+            if (await worksheet.acell('B4')).value == "NO":
+                try:
+                    user_id_cell = await Nworksheet.find(str(ctx.author.id))
+                    return await loadingMsg.edit(content='', embed=discord.Embed(description=":warning: You have already sent a booster exam. Use `r.checkScore` in my DMs to check your score if you haven't already."))
+                except:
+                    view = YesorNoView(ctx.author)
+                    confirm_msg = await ctx.author.send(embed=discord.Embed(title="⚠️ Confirmation",description="For security reasons, you will be limited to 3 hours of time to complete the quiz. Don't worry however, the quiz should only take about 20-40 minutes.\n> *Only continue if you have enough time to give the exam.*",colour=0xeb6b34).set_footer(text="React accordingly - Prompt times out in 1 minute"), view=view)
+                    await loadingMsg.delete()
+                    await view.wait()
+                    if view.value == None:
+                        await confirm_msg.edit(embed = discord.Embed(description="**Prompt timed out.**",color=0xFF0000).set_author(name=str(ctx.author), icon_url=ctx.author.avatar), view=None)
+                    if view.value == True:
+                        newCode = 'CGN-'+''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(10))
                         try:
-                            reaction, user = await self.client.wait_for('reaction_add', timeout=200.0, check=check)
-                        except asyncio.TimeoutError:
-                            await confirm_msg.edit(embed = discord.Embed(description="**Prompt timed out.**",color=0xFF0000).set_author(name=str(ctx.author), icon_url=ctx.author.avatar))
-                            await confirm_msg.remove_reaction("<:RO_success:773206804850016276>",ctx.me)
-                            await confirm_msg.remove_reaction("<:RO_error:773206804758790184>",ctx.me)
-                        else:
-                            if str(reaction.emoji) == "<:RO_success:773206804850016276>":
-                                newCode = 'CGN-'+''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(10))
-                                try:
-                                    dname = ctx.author.display_name.split(" | ")[1]
-                                except IndexError:
-                                    dname = ctx.author.display_name
-                                nuser = quote(ctx.author.name) + "%23" + ctx.author.discriminator
-                                curCode = (await worksheet.acell('A4')).value
-                                link = f"https://docs.google.com/forms/d/e/1FAIpQLSdN7KFwEsZNPNZ11A9ldmBZQm4gJ0ggOekr8ZgMWNszFbwkIg/viewform?usp=pp_url&entry.1555421643={curCode}&entry.435634905={dname}&entry.1117172933={nuser}&entry.1877223641={ctx.author.id}"
-                                msg = await ctx.author.send(embed=discord.Embed(title = "Certification Examination Form",description = f"You will have 3 hours to complete the exam, the link to which is given below. Simply click the link to enter the examination.\n\n➤ Verification Code: **`{curCode}`**\n➤ Form Link: [Click Me!]({link})").set_footer(text="Use r.checkScore to check your final score after taking the exam.")) 
-                                await worksheet.update_acell('B4', "YES")
-                                await worksheet.update_acell('D4', f"{dname} | {str(ctx.author.id)}")
-                                await worksheet.update_acell('A4', f'{newCode}')
-                                await asyncio.sleep(10800)
-                                if (await worksheet.acell('B4')).value == "YES" and (await worksheet.acell('D4')).value == dname:
-                                    await worksheet.update_acell('C4',"YES")
-                                    await msg.edit(embed = discord.Embed(description="⚠️**3 Hour timeout reached**\n\nThe verification code for the exam has now __updated__.",colour=0xFF0000))
-                            elif str(reaction.emoji) == "<:RO_error:773206804758790184>":
-                                await confirm_msg.delete()
-                                embed_no=discord.Embed(title="Exam prompt cancelled.", colour=0xFF0000)
-                                await user.send(embed=embed_no)
-                else:
-                    await ctx.author.send(embed = discord.Embed(title="Examination currently occupied",description="Unfortunately, another person is currently giving the exam. Two or more people cannot simultaneously give the exam.\n\nPlease wait for a while and try this command again (max wait times for each person : 3 hours)."))
+                            dname = ctx.author.display_name.split(" | ")[1]
+                        except IndexError:
+                            dname = ctx.author.display_name
+                        nuser = quote(ctx.author.name) + "%23" + ctx.author.discriminator
+                        curCode = (await worksheet.acell('A4')).value
+                        link = f"https://docs.google.com/forms/d/e/1FAIpQLSdN7KFwEsZNPNZ11A9ldmBZQm4gJ0ggOekr8ZgMWNszFbwkIg/viewform?usp=pp_url&entry.1555421643={curCode}&entry.435634905={dname}&entry.1117172933={nuser}&entry.1877223641={ctx.author.id}"
+                        await confirm_msg.delete()
+                        msg = await ctx.author.send(embed=discord.Embed(title = "Certification Examination Form",description = f"You will have 3 hours to complete the exam, the link to which is given below. Simply click the link to enter the examination.\n\n➤ Verification Code: **`{curCode}`**\n➤ Form Link: [Click Me!]({link})").set_footer(text="Use r.checkScore to check your final score after taking the exam.")) 
+                        await worksheet.update_acell('B4', "YES")
+                        await worksheet.update_acell('D4', f"{dname} | {str(ctx.author.id)}")
+                        await worksheet.update_acell('A4', f'{newCode}')
+                        await asyncio.sleep(10800)
+                        if (await worksheet.acell('B4')).value == "YES" and (await worksheet.acell('D4')).value == dname:
+                            await worksheet.update_acell('C4',"YES")
+                            await msg.edit(embed = discord.Embed(description="⚠️**3 Hour timeout reached**\n\nThe verification code for the exam has now __updated__.",colour=0xFF0000))
+                    if view.value == False:
+                        await confirm_msg.delete()
+                        embed_no=discord.Embed(title="Exam prompt cancelled.", colour=0xFF0000)
+                        await ctx.author.send(embed=embed_no)
             else:
-                await ctx.author.send(embed = discord.Embed(title="⚠️ You are on cooldown",description="Please make sure you have waited the complete **24 hours** before requesting another attempt at the nitro booster exam.", colour=0xFF0000))
+                return await loadingMsg.edit(content='', embed = discord.Embed(title="Examination currently occupied",description="Unfortunately, another person is currently giving the exam. Two or more people cannot simultaneously give the exam.\n\nPlease wait for a while and try this command again (max wait times for each person : 3 hours)."))
+        else:
+            return await loadingMsg.edit(content='', embed = discord.Embed(title="⚠️ You are on exam cooldown",description="Please make sure you have waited the complete **24 hours** before requesting another attempt at the nitro booster exam.", colour=0xFF0000))
 
     @nitroExam.error
     async def nitroexam_error(self, ctx, error): 
