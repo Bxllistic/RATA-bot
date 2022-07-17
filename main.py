@@ -91,6 +91,8 @@ async def on_command_error(ctx, error):
             await ctx.reply(embed=embed)
     elif isinstance(error, discord.ext.commands.errors.MissingAnyRole):
         return await ctx.message.add_reaction('<:missingroles:876142198415052831>')
+    elif isinstance(error, discord.ext.commands.errors.MissingRole):
+        return await ctx.reply(embed=discord.Embed(description=f'<:missingroles:876142198415052831> You are missing the <@&{error.missing_role}> role.', color=discord.Color.red()))
     elif isinstance(error, discord.ext.commands.errors.MissingPermissions):
         print(f'{currentTimeErrorDXB()} Ignoring exception in command {ctx.command}:', file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
