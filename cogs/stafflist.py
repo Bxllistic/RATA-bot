@@ -311,7 +311,7 @@ class StaffListCog(commands.Cog):
         hr_emb = discord.Embed(title='High Ranks', description=hr_str, color=discord.Color.blue())
         ins_emb = discord.Embed(title='Training Staff', description=ins_str, color=discord.Color.blue())
         mod_emb = discord.Embed(title='Moderation Staff', description=mod_str, color=discord.Color.blue())
-        closing_emb = discord.Embed(description='Welcome to <:RATAcleanlogo:739164550862995502> **RATA**! Above is a list of ranks that you\'ll find within RATA, their purpose/duties, along with the members who hold that rank. If you have any questions we highly recommend going to one of the ranks under "Staff" before reaching out to a higher rank. All HR ranks are assigned by Management.').set_footer(text='RATA Administration | List auto-updates every 24 hours')
+        closing_emb = discord.Embed(description='Welcome to <:RATAcleanlogo:739164550862995502> **RATA**! Above is a list of ranks that you\'ll find within RATA, their purpose/duties, along with the members who hold that rank. If you have any questions we highly recommend going to one of the ranks under "Staff" before reaching out to a higher rank. All HR ranks are assigned by Management.', color=0xFFFFFF).set_footer(text='RATA Administration | List auto-updates every 24 hours')
         
         await msg.edit(content=None,embeds=[img_emb,hr_emb,ins_emb,mod_emb,closing_emb])
 	
