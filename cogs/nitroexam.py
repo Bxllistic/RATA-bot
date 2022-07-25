@@ -123,11 +123,6 @@ class NitroExamCog(commands.Cog):
         else:
             return await loadingMsg.edit(content='', embed = discord.Embed(title="⚠️ You are on exam cooldown",description="Please make sure you have waited the complete **24 hours** before requesting another attempt at the nitro booster exam.", colour=0xFF0000))
 
-    @nitroExam.error
-    async def nitroexam_error(self, ctx, error): 
-        if isinstance(error, discord.ext.commands.errors.CheckFailure):
-            await ctx.reply("<:RO_error:773206804758790184> You need to be at `Tier 4` to access this command.")
-
     @commands.command(name="checkScore")
     @commands.dm_only()
     @commands.cooldown(1,30,commands.BucketType.user)
