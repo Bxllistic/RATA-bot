@@ -605,7 +605,7 @@ class ModerationCog(commands.Cog):
         cursor = await self.client.db.execute(f"SELECT staff_id, reason, dept FROM strikes WHERE strike_id = '{strike_id}'")
         data = await cursor.fetchone()
         await cursor.close()
-        if len(data) == 0:
+        if len(data) == None:
             return await ctx.send(f"<:RO_error:773206804758790184> Strike with the ID `{strike_id}` was not found.")
         #-----------------------------------------------------------------
         
