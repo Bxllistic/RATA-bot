@@ -3,3 +3,6 @@ moderation.db
 scoreChecked.dat
 .env
 LICENSE
+credentials_nitro.json
+credentials_patrol.json
+credentials_training.json

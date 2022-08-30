@@ -242,6 +242,7 @@ class SpecExam(commands.Cog):
             embed = discord.Embed(title=f'Spectator Role Switch', description='Currently, you have spectator shout pings **`disabled`**. Would you like to re-enable them?',colour=0xFFA500).set_footer(text="Prompt times out in 60 seconds.").set_author(name=ctx.author.display_name,icon_url=ctx.author.avatar)
             view = ON_SpecPingView(ctx.author)
             askingMsg = await ctx.reply(embed=embed,view=view)
+            await view.wait()
             if view.value == True:
                 await ctx.author.remove_roles(noping_specrole)
                 await ctx.author.add_roles(ping_specrole)
