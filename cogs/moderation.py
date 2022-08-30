@@ -364,6 +364,16 @@ class ModerationCog(commands.Cog):
                 reasonMsg_attachmentStr = reasonMsg_attachmentStr[:-1]
             reasonMsg.content = reasonMsg.content.replace('"','\"')
             reasonMsg.content = reasonMsg.content.replace("'","\'")
+            reasonMsgFormatted = reasonMsg.content
+            newlineIndexes = [pos for pos, char in enumerate(reasonMsgFormatted) if char == '\n']
+            if newlineIndexes != []:
+                count = 0
+                for pos in newlineIndexes:
+                    reasonMsgFormatted = list(reasonMsgFormatted)
+                    reasonMsgFormatted.insert(pos+1+count, "> ")
+                    count += 2
+                    reasonMsgFormatted = ''.join(reasonMsgFormatted)
+
         embed = discord.Embed(description="**Is this strike appealable?**")
         embed.set_author(icon_url=staff.display_avatar, name=staff.display_name)
         embed.set_footer(text='RATA Administration - Times out in 1 minute')
@@ -444,9 +454,9 @@ class ModerationCog(commands.Cog):
             embed_dm.set_thumbnail(url="https://cdn.discordapp.com/attachments/450656229744967681/770326969505153064/image-min22.png")
 
             if appealable:
-                embed_dm.add_field(name="Strike Reason",value=f"{reasonMsg.content}"+f"{reasonMsg_attachmentStr}\n\nYou may appeal this strike after one month by visiting the [strike appeal form](https://forms.gle/GKLgZLbJPZjkVd7x7).",inline=False)
+                embed_dm.add_field(name="Strike Reason",value=f"> {reasonMsgFormatted}"+f"{reasonMsg_attachmentStr}\n\nYou may appeal this strike after one month by visiting the [strike appeal form](https://forms.gle/GKLgZLbJPZjkVd7x7).",inline=False)
             else:
-                embed_dm.add_field(name="Strike Reason",value=f"{reasonMsg.content}"+f"{reasonMsg_attachmentStr}\n\n**`[NOT APPEALABLE]`**",inline=False)
+                embed_dm.add_field(name="Strike Reason",value=f"> {reasonMsgFormatted}"+f"{reasonMsg_attachmentStr}\n\n**`[NOT APPEALABLE]`**",inline=False)
             embed_dm.set_footer(text=f'Staff ID: {staff.id} - RATA Administration')
 
             embed_send = discord.Embed(color=0xeb6b34)
@@ -455,7 +465,7 @@ class ModerationCog(commands.Cog):
             embed_send.add_field(name="Strike Number",value=f"> **`{strikenum}`**",inline=False)
             embed_send.add_field(name="Strike Issuer",value=f"> **{ctx.author.display_name}**{role}",inline=False)
             embed_send.add_field(name="Strike Date",value=f"> <t:{round(time.time())}:F>",inline=False)
-            embed_send.add_field(name="Strike Reason",value=f"> {reasonMsg.content}"+f"{reasonMsg_attachmentStr}",inline=False)
+            embed_send.add_field(name="Strike Reason",value=f"> {reasonMsgFormatted}"+f"{reasonMsg_attachmentStr}",inline=False)
             embed_send.set_thumbnail(url="https://cdn.discordapp.com/attachments/450656229744967681/770326969505153064/image-min22.png")
             embed_send.set_footer(text=f'Strike ID: {strike_id} | RATA Administration')
             try:
@@ -518,6 +528,14 @@ class ModerationCog(commands.Cog):
                         strike[3] = 'Not Available'
                         genEmbed.add_field(name=f"Strike {count} - ID {strike[0]}", value=f"> {strike[1]}"+f"\n*Issue date and issuer not available*", inline=False)
                     else:
+                        newlineIndexes = [pos for pos, char in enumerate(strike[1]) if char == '\n']
+                        if newlineIndexes != []:
+                            count = 0
+                            for pos in newlineIndexes:
+                                strike[1] = list(strike[1])
+                                strike[1].insert(pos+1+count, "> ")
+                                count += 2
+                                strike[1] = ''.join(strike[1])
                         genEmbed.add_field(name=f"Strike {count} - ID: {strike[0]}", value=f"> {strike[1]}"+f"\n*Issued by <@!{strike[3]}> on <t:{strike[2]}:D>*", inline=False)
                     count+=1
                 embedList.append(genEmbed)
@@ -531,6 +549,14 @@ class ModerationCog(commands.Cog):
                         strike[3] = 'Not Available'
                         trainingEmbed.add_field(name=f"Strike {count} - ID {strike[0]}", value=f"> {strike[1]}"+f"\n*Issue date and issuer not available*", inline=False)
                     else:
+                        newlineIndexes = [pos for pos, char in enumerate(strike[1]) if char == '\n']
+                        if newlineIndexes != []:
+                            count = 0
+                            for pos in newlineIndexes:
+                                strike[1] = list(strike[1])
+                                strike[1].insert(pos+1+count, "> ")
+                                count += 2
+                                strike[1] = ''.join(strike[1])
                         trainingEmbed.add_field(name=f"Strike {count} - ID: {strike[0]}", value=f"> {strike[1]}"+f"\n*Issued by <@!{strike[3]}> on <t:{strike[2]}:D>*", inline=False)
                     count+=1
                 embedList.append(trainingEmbed)
@@ -544,6 +570,14 @@ class ModerationCog(commands.Cog):
                         strike[3] = 'Not Available'
                         modEmbed.add_field(name=f"Strike {count} - ID {strike[0]}", value=f"> {strike[1]}"+f"\n*Issue date and issuer not available*", inline=False)
                     else:
+                        newlineIndexes = [pos for pos, char in enumerate(strike[1]) if char == '\n']
+                        if newlineIndexes != []:
+                            count = 0
+                            for pos in newlineIndexes:
+                                strike[1] = list(strike[1])
+                                strike[1].insert(pos+1+count, "> ")
+                                count += 2
+                                strike[1] = ''.join(strike[1])
                         modEmbed.add_field(name=f"Strike {count} - ID: {strike[0]}", value=f"> {strike[1]}"+f"\n*Issued by <@!{strike[3]}> on <t:{strike[2]}:D>*", inline=False)
                     count+=1
                 embedList.append(modEmbed)
@@ -571,7 +605,7 @@ class ModerationCog(commands.Cog):
         cursor = await self.client.db.execute(f"SELECT staff_id, reason, dept FROM strikes WHERE strike_id = '{strike_id}'")
         data = await cursor.fetchone()
         await cursor.close()
-        if len(data) == 0:
+        if data == None:
             return await ctx.send(f"<:RO_error:773206804758790184> Strike with the ID `{strike_id}` was not found.")
         #-----------------------------------------------------------------
         
