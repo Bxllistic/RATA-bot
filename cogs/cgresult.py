@@ -2,6 +2,7 @@ import discord
 import time, random, os
 from discord.ext import commands
 from PIL import Image, ImageFont, ImageDraw
+import re
 from bot_utils.roleId import Roles
 
 def sync_createCertificate(name_text, name_text3,marks):
@@ -77,6 +78,60 @@ class CGResultCog(commands.Cog):
             await ctx.reply("<a:RO_alert:773211228373647360> User was not found. Please ensure you are using either complete discord username (abc#1234) or their user ID.")
         elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
             await ctx.reply("<a:RO_alert:773211228373647360> Missing necessary argument.\n```r.cgresult [member ID/username] [marks]```")
+
+    @commands.command(aliases=['change_signature'])
+    @commands.has_role(Roles.director, Roles.advisor)
+    async def certificateSignatureChange(ctx, image_url):
+        try:
+            attachment = ctx.message.attachments[0]  # Assuming the file is attached to the command message
+            if attachment.content_type != 'image/png':
+                await ctx.send("<a:RO_alert:773211228373647360> Invalid file type. Please provide a PNG file.")
+                return
+
+            if attachment.width != 500 or attachment.height != 200:
+                await ctx.send("<a:RO_alert:773211228373647360> Invalid dimensions. Please provide a 500x200 (width x height) image.")
+                return
+
+            # Open the existing image
+            existing_image = Image.open("RAWCertificate_NoSign.png")
+
+            # Open the user-provided image
+            user_image = Image.open(attachment)
+
+            # Create a new image with transparent background
+            new_image = Image.new("RGBA", (existing_image.width, existing_image.height), (0, 0, 0, 0))
+
+            # Composite the existing image and user-provided image
+            new_image.paste(existing_image, (0, 0))
+            new_image.paste(user_image, (1240, 970), mask=user_image)
+
+            # Adding director label
+            match = re.search(r"\[.*?\]\s*(.*)", ctx.author.display_name)
+
+            if match:
+                astr = match.group(1) + ", Director of RATA"
+            else:
+                astr = ctx.author.display_name + ", Director of RATA"
+
+            draw = ImageDraw.Draw(new_image)
+            font = ImageFont.truetype('georgia.ttf', 35)
+
+            text_width, text_height = font.getsize(astr)
+
+            # Calculate the top-left corner coordinate for centered text
+            center_x = 1419 - text_width // 2
+            center_y = 1181 - text_height // 2
+
+            draw.text((center_x, center_y), astr, font=font, fill=(0, 0, 0))
+
+            # Save the resulting image
+            new_image.save("RAWCertificate.png")
+
+            await ctx.send("Image stored successfully!")
+        except IndexError:
+            await ctx.send("<a:RO_alert:773211228373647360> Please attach a PNG image to the command.")
+        except Exception as e:
+            await ctx.send(f"<a:RO_alert:773211228373647360> An error occurred: {str(e)}")
 
 
 async def setup(client):
