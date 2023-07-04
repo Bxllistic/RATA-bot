@@ -4,6 +4,7 @@ from discord.ext import commands
 from PIL import Image, ImageFont, ImageDraw
 import re
 from bot_utils.roleId import Roles
+from io import BytesIO
 
 def sync_createCertificate(name_text, name_text3,marks):
     embed = discord.Embed(title="RATA Certification Exam Results", description=f"Greetings from the RATA Examination Team,\nWe are delighted to congratulate you, **{name_text}**, on passing the Certification Exam with **{marks}** out of 40! Thank you for attempting the exam, and good luck with your future expeditions and squad collaborations.\n\nAs a token of appreciation, we are providing you with a unique certificate attached below." , colour=0x2fee92)
@@ -23,6 +24,33 @@ def sync_createCertificate(name_text, name_text3,marks):
     file = discord.File(f"{BASE_DIR}/MyCertificate-{name_text3}.png", filename=f"MyCertificate-{name_text3}.png")
     embed.set_image(url=f"attachment://MyCertificate-{name_text3}.png")
     return embed,file
+
+def sync_changeSignature(atch_bytes, disp_name):
+    # Open the existing image
+    existing_image = Image.open("RAWCertificate_NoSign.png")
+    user_image = Image.open(BytesIO(atch_bytes))
+    new_image = Image.new("RGBA", (existing_image.width, existing_image.height), (0, 0, 0, 0))
+
+    # Composite the existing image and user-provided image
+    new_image.paste(existing_image, (0, 0))
+    new_image.paste(user_image, (1175, 950), mask=user_image)
+
+    # Adding director label
+    match = re.search(r"\[.*?\]\s*(.*)", disp_name)
+    if match:
+        astr = match.group(1) + ", Director of RATA"
+    else:
+        astr = disp_name + ", Director of RATA"
+    draw = ImageDraw.Draw(new_image)
+    font = ImageFont.truetype('georgia.ttf', 35)
+    text_width, text_height = font.getsize(astr)
+    center_x = 1428 - text_width // 2
+    center_y = 1175 - text_height // 2
+    draw.text((center_x, center_y), astr, font=font, fill=(0, 0, 0))
+
+    # Save the resulting image
+    new_image.save("RAWCertificate.png")
+
 
 def sync_deleteFile(name_text3):
     BASE_DIR = str(os.path.dirname(os.path.abspath("main.py")))
@@ -80,58 +108,30 @@ class CGResultCog(commands.Cog):
             await ctx.reply("<a:RO_alert:773211228373647360> Missing necessary argument.\n```r.cgresult [member ID/username] [marks]```")
 
     @commands.command(aliases=['change_signature'])
-    @commands.has_role(Roles.director, Roles.advisor)
-    async def certificateSignatureChange(ctx, image_url):
+    @commands.has_any_role(Roles.director, Roles.advisor)
+    async def certificateSignatureChange(self, ctx):
         try:
             attachment = ctx.message.attachments[0]  # Assuming the file is attached to the command message
             if attachment.content_type != 'image/png':
-                await ctx.send("<a:RO_alert:773211228373647360> Invalid file type. Please provide a PNG file.")
-                return
+                return await ctx.reply("<a:RO_alert:773211228373647360> Invalid **file type**. Please attach a file that follows the below requirements:\n```diff\n+ Must be a PNG file\n+ Must be 500x200 by dimensions (width x height)\n+ Must be a black signature on a transparent background\n```")
 
             if attachment.width != 500 or attachment.height != 200:
-                await ctx.send("<a:RO_alert:773211228373647360> Invalid dimensions. Please provide a 500x200 (width x height) image.")
-                return
+                return await ctx.reply("<a:RO_alert:773211228373647360> Invalid **dimensions**. Please attach a file that follows the below requirements:\n```diff\n+ Must be a PNG file\n+ Must be 500x200 by dimensions (width x height)\n+ Must be a black signature on a transparent background\n```")
 
-            # Open the existing image
-            existing_image = Image.open("RAWCertificate_NoSign.png")
+            msg = await ctx.reply("Working on it...")
 
-            # Open the user-provided image
-            user_image = Image.open(attachment)
+            p_attachBytes = await attachment.read()
 
-            # Create a new image with transparent background
-            new_image = Image.new("RGBA", (existing_image.width, existing_image.height), (0, 0, 0, 0))
+            await self.client.loop.run_in_executor(None, sync_changeSignature, p_attachBytes, ctx.author.display_name)
 
-            # Composite the existing image and user-provided image
-            new_image.paste(existing_image, (0, 0))
-            new_image.paste(user_image, (1240, 970), mask=user_image)
+            returned_embed, returned_file = await self.client.loop.run_in_executor(None, sync_createCertificate, "SAMPLE", "CGC-0000000",40)
 
-            # Adding director label
-            match = re.search(r"\[.*?\]\s*(.*)", ctx.author.display_name)
-
-            if match:
-                astr = match.group(1) + ", Director of RATA"
-            else:
-                astr = ctx.author.display_name + ", Director of RATA"
-
-            draw = ImageDraw.Draw(new_image)
-            font = ImageFont.truetype('georgia.ttf', 35)
-
-            text_width, text_height = font.getsize(astr)
-
-            # Calculate the top-left corner coordinate for centered text
-            center_x = 1419 - text_width // 2
-            center_y = 1181 - text_height // 2
-
-            draw.text((center_x, center_y), astr, font=font, fill=(0, 0, 0))
-
-            # Save the resulting image
-            new_image.save("RAWCertificate.png")
-
-            await ctx.send("Image stored successfully!")
+            await msg.edit(content="Certificate signature and name modified successfully! Below is a sample:")
+            await ctx.send(file=returned_file)
         except IndexError:
-            await ctx.send("<a:RO_alert:773211228373647360> Please attach a PNG image to the command.")
+            await ctx.reply("<a:RO_alert:773211228373647360> Please attach a PNG image that follows the below requirements:\n```diff\n+ Must be a PNG file\n+ Must be 500x200 by dimensions (width x height)\n+ Must be a black signature on a transparent background\n```")
         except Exception as e:
-            await ctx.send(f"<a:RO_alert:773211228373647360> An error occurred: {str(e)}")
+            await ctx.reply(f"error occurred: {str(e)}\nngl avia is defo not gonna fix this shi so u might wanna forget bout it or wait a couple months until i open this god forsaken app again")
 
 
 async def setup(client):
