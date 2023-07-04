@@ -108,7 +108,8 @@ class CGResultCog(commands.Cog):
             await ctx.reply("<a:RO_alert:773211228373647360> Missing necessary argument.\n```r.cgresult [member ID/username] [marks]```")
 
     @commands.command(aliases=['change_signature'])
-    @commands.has_any_role(Roles.director, Roles.advisor)
+    @commands.has_role(Roles.director)
+    @commands.cooldown(1,60,commands.BucketType.user)
     async def certificateSignatureChange(self, ctx):
         try:
             attachment = ctx.message.attachments[0]  # Assuming the file is attached to the command message
@@ -128,6 +129,8 @@ class CGResultCog(commands.Cog):
 
             await msg.edit(content="Certificate signature and name modified successfully! Below is a sample:")
             await ctx.send(file=returned_file)
+
+            await self.client.loop.run_in_executor(None, sync_deleteFile, "CGC-0000000")
         except IndexError:
             await ctx.reply("<a:RO_alert:773211228373647360> Please attach a PNG image that follows the below requirements:\n```diff\n+ Must be a PNG file\n+ Must be 500x200 by dimensions (width x height)\n+ Must be a black signature on a transparent background\n```")
         except Exception as e:
