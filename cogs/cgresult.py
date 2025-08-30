@@ -28,7 +28,7 @@ def sync_createCertificate(name_text, name_text3,marks):
 def sync_changeSignature(atch_bytes, disp_name):
     # Open the existing image
     existing_image = Image.open("RAWCertificate_NoSign.png")
-    user_image = Image.open(BytesIO(atch_bytes))
+    user_image = Image.open(BytesIO(atch_bytes)).convert("RGBA")
     new_image = Image.new("RGBA", (existing_image.width, existing_image.height), (0, 0, 0, 0))
 
     # Composite the existing image and user-provided image
@@ -43,7 +43,8 @@ def sync_changeSignature(atch_bytes, disp_name):
         astr = disp_name + ", Director of RATA"
     draw = ImageDraw.Draw(new_image)
     font = ImageFont.truetype('georgia.ttf', 35)
-    text_width, text_height = font.getsize(astr)
+    bbox = draw.textbbox((0, 0), astr, font=font)
+    text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
     center_x = 1428 - text_width // 2
     center_y = 1175 - text_height // 2
     draw.text((center_x, center_y), astr, font=font, fill=(0, 0, 0))
